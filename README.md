@@ -43,6 +43,12 @@ Isi `MONGODB_URI` hanya di file lokal atau Vercel Environment Settings. Jangan c
 
 Health endpoint tidak membutuhkan koneksi MongoDB. Koneksi database memakai cache Mongoose untuk runtime serverless dan akan dipakai saat fitur domain mulai berjalan.
 
+## Auth development
+
+Set `JWT_SECRET`, `JWT_EXPIRES_IN`, `AUTH_COOKIE_NAME`, and `AUTH_COOKIE_SECURE` in the local environment before starting the server. Auth endpoints are `POST /api/auth/login`, `POST /api/auth/logout`, and `GET /api/auth/me`.
+
+The dummy-user seed is intentionally separate from test/build commands. Run `npm run seed:users` only with an explicitly configured `SEED_PASSWORD` and an approved database target; never run it against Atlas as part of normal verification.
+
 ## Docs
 
 - `docs/API.md` — kontrak endpoint
