@@ -1,0 +1,23 @@
+$ npm run check
+
+> ordertrack-server@0.1.0 check
+> node --check src/app.js && node --check src/server.js && node --check src/config/env.js && node --check src/db/mongoose.js && node --check src/routes/health.js && node --check api/index.js
+
+exit=0
+$ npm test
+
+> ordertrack-server@0.1.0 test
+> node --test
+
+✔ GET /api/health returns the contracted success response (20.838042ms)
+✔ unknown routes return the standard error response without a stack trace (5.937666ms)
+✔ malformed JSON returns the standard error response without a stack trace (12.008666ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 236.2355
+exit=0
