@@ -28,6 +28,8 @@ export function createApp({ userModel = User, settings = env } = {}) {
       });
     }
 
+    console.error('[api] unhandled error:', error.name, error.message);
+
     return response.status(500).json({
       success: false,
       message: 'Internal server error',
