@@ -1,6 +1,7 @@
 import express from 'express';
 import healthRouter from './routes/health.js';
 import { createAuthRouter } from './routes/auth.js';
+import docsRouter from './routes/docs.js';
 import User from './models/User.js';
 import { env } from './config/env.js';
 
@@ -9,6 +10,7 @@ export function createApp({ userModel = User, settings = env } = {}) {
 
   app.use(express.json());
   app.use('/api', healthRouter);
+  app.use('/api/docs', docsRouter);
   app.use('/api/auth', createAuthRouter({ userModel, settings }));
 
   app.use((_request, response) => {
