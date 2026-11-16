@@ -5,12 +5,16 @@ import { createCustomersRouter } from './routes/customers.js';
 import { createVendorsRouter } from './routes/vendors.js';
 import { createQuotationsRouter } from './routes/quotations.js';
 import { createSalesOrdersRouter } from './routes/salesOrders.js';
+import { createVendorPosRouter } from './routes/vendorPos.js';
+import { createGoodsReceiptsRouter } from './routes/goodsReceipts.js';
 import docsRouter from './routes/docs.js';
 import User from './models/User.js';
 import Customer from './models/Customer.js';
 import Vendor from './models/Vendor.js';
 import Quotation from './models/Quotation.js';
 import SalesOrder from './models/SalesOrder.js';
+import VendorPO from './models/VendorPO.js';
+import GoodsReceipt from './models/GoodsReceipt.js';
 import { createAuthenticateUser } from './middleware/auth.js';
 import { ApiError } from './services/shared.js';
 import { env } from './config/env.js';
@@ -21,6 +25,8 @@ export function createApp({
   vendorModel = Vendor,
   quotationModel = Quotation,
   salesOrderModel = SalesOrder,
+  vendorPoModel = VendorPO,
+  goodsReceiptModel = GoodsReceipt,
   settings = env,
 } = {}) {
   const app = express();
@@ -33,7 +39,9 @@ export function createApp({
   app.use('/api/customers', createCustomersRouter({ customerModel, authenticate }));
   app.use('/api/vendors', createVendorsRouter({ vendorModel, authenticate }));
   app.use('/api/quotations', createQuotationsRouter({ quotationModel, customerModel, salesOrderModel, authenticate }));
-  app.use('/api/sales-orders', createSalesOrdersRouter({ salesOrderModel, authenticate }));
+  app.use('/api/sales-orders', createSalesOrdersRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, authenticate }));
+  app.use('/api/vendor-pos', createVendorPosRouter({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, authenticate }));
+  app.use('/api/goods-receipts', createGoodsReceiptsRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, authenticate }));
 
   app.use((_request, response) => {
     response.status(404).json({
