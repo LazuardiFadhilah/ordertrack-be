@@ -99,7 +99,22 @@ export function createMemoryModel() {
       return query(() => {
         const document = documents.find((candidate) => matches(candidate, filter));
         if (!document) return null;
-        Object.assign(document, structuredClone(update.$set ?? {}), { updatedAt: new Date() });
+        const patch = {};
+        if (update.$set) Object.assign(patch, structuredClone(update.$set));
+        if (update.$inc) {
+          for (const [path, delta] of Object.entries(update.$inc)) {
+            const keys = path.split('.');
+            let target = patch;
+            for (let i = 0; i < keys.length - 1; i += 1) {
+              const key = keys[i];
+              if (target[key] === undefined) target[key] = structuredClone(document[key]);
+              target = target[key];
+            }
+            const leaf = keys[keys.length - 1];
+            target[leaf] = (target[leaf] ?? document[leaf] ?? 0) + delta;
+          }
+        }
+        Object.assign(document, patch, { updatedAt: new Date() });
         return options.new === false ? null : structuredClone(document);
       });
     },
@@ -117,5 +132,7 @@ export function createMemoryModels() {
     vendorModel: createMemoryModel(),
     quotationModel: createMemoryModel(),
     salesOrderModel: createMemoryModel(),
+    vendorPoModel: createMemoryModel(),
+    goodsReceiptModel: createMemoryModel(),
   };
 }

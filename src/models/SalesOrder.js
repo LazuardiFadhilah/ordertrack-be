@@ -1,6 +1,19 @@
 import mongoose from 'mongoose';
 
-export const SALES_ORDER_STATUSES = Object.freeze(['PO_RECEIVED']);
+export const SALES_ORDER_STATUSES = Object.freeze([
+  'PO_RECEIVED',
+  'PROCURING',
+  'PARTIAL_RECEIVED',
+  'GOODS_RECEIVED',
+  'SHIPPING_REQUESTED',
+  'PARTIAL_SHIPPED',
+  'SHIPPED',
+  'DO_RETURNED',
+  'INVOICING',
+  'PAID',
+  'VENDOR_PAID',
+  'CLOSED',
+]);
 
 const salesOrderItemSchema = new mongoose.Schema(
   {

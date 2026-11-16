@@ -1,7 +1,7 @@
 import { createSalesOrderService } from '../services/salesOrders.js';
 
-export function createSalesOrdersController({ salesOrderModel }) {
-  const service = createSalesOrderService({ salesOrderModel });
+export function createSalesOrdersController({ salesOrderModel, vendorPoModel, goodsReceiptModel }) {
+  const service = createSalesOrderService({ salesOrderModel, vendorPoModel, goodsReceiptModel });
 
   return {
     async list(request, response) {
