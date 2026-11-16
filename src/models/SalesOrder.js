@@ -9,6 +9,7 @@ export const SALES_ORDER_STATUSES = Object.freeze([
   'PARTIAL_SHIPPED',
   'SHIPPED',
   'DO_RETURNED',
+  'COMPLETED',
   'INVOICING',
   'PAID',
   'VENDOR_PAID',

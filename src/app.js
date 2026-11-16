@@ -15,7 +15,10 @@ import Quotation from './models/Quotation.js';
 import SalesOrder from './models/SalesOrder.js';
 import VendorPO from './models/VendorPO.js';
 import GoodsReceipt from './models/GoodsReceipt.js';
+import ShippingRequest from './models/ShippingRequest.js';
+import DeliveryOrder from './models/DeliveryOrder.js';
 import { createAuthenticateUser } from './middleware/auth.js';
+import { createShippingRouter } from './routes/shipping.js';
 import { ApiError } from './services/shared.js';
 import { env } from './config/env.js';
 
@@ -27,6 +30,8 @@ export function createApp({
   salesOrderModel = SalesOrder,
   vendorPoModel = VendorPO,
   goodsReceiptModel = GoodsReceipt,
+  shippingRequestModel = ShippingRequest,
+  deliveryOrderModel = DeliveryOrder,
   settings = env,
 } = {}) {
   const app = express();
@@ -42,6 +47,7 @@ export function createApp({
   app.use('/api/sales-orders', createSalesOrdersRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, authenticate }));
   app.use('/api/vendor-pos', createVendorPosRouter({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, authenticate }));
   app.use('/api/goods-receipts', createGoodsReceiptsRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, authenticate }));
+  app.use('/api/shipping', createShippingRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, authenticate }));
 
   app.use((_request, response) => {
     response.status(404).json({
