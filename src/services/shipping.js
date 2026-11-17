@@ -169,6 +169,8 @@ export function createShippingService({ salesOrderModel, vendorPoModel, goodsRec
       const input = validate(createShippingRequestSchema, body);
       const so = await loadSo(input.soId, user);
 
+      const pendingRequests = await shippingRequestModel.find({ soId: so._id, status: 'REQUESTED' }).lean();
+
       const enrichedItems = [];
       for (const item of input.items) {
         if (item.soItemIndex < 0 || item.soItemIndex >= so.items.length) {
@@ -176,12 +178,17 @@ export function createShippingService({ salesOrderModel, vendorPoModel, goodsRec
         }
         const soItem = so.items[item.soItemIndex];
         const alreadyShipped = soItem.qtyShipped || 0;
-        const availableToShip = soItem.qtyReceived - alreadyShipped;
+        const pendingQty = pendingRequests.reduce((sum, req) => {
+          const reqItem = req.items.find((i) => i.soItemIndex === item.soItemIndex);
+          return sum + (reqItem ? reqItem.qty : 0);
+        }, 0);
+
+        const availableToShip = soItem.qtyReceived - alreadyShipped - pendingQty;
 
         if (item.qty > availableToShip) {
           throw new ApiError(400, 'Invalid request', [{
             field: `items.${input.items.indexOf(item)}.qty`,
-            message: `Cannot request shipping for ${item.qty} units. Only ${availableToShip} units available (received: ${soItem.qtyReceived}, already shipped: ${alreadyShipped})`,
+            message: `Cannot request shipping for ${item.qty} units. Only ${availableToShip} units available (received: ${soItem.qtyReceived}, already shipped: ${alreadyShipped}, pending requested: ${pendingQty})`,
           }]);
         }
 

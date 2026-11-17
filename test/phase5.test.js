@@ -170,6 +170,17 @@ test('shipping request creation and delivery order flow to completed', async () 
     assert.equal(srRes.status, 201);
     const shippingRequestId = srRes.body.data.shippingRequest.id;
 
+    // Verify duplicate pending shipping request fails due to reserved quantity guard
+    const dupSrRes = await api(baseUrl, '/api/shipping/shipping-requests', {
+      method: 'POST',
+      cookie: salesAuth.cookie,
+      body: {
+        soId: salesOrderId,
+        items: [{ soItemIndex: 0, qty: 1 }],
+      },
+    });
+    assert.equal(dupSrRes.status, 400);
+
     // Create Delivery Order (GA)
     const doRes = await api(baseUrl, '/api/shipping/delivery-orders', {
       method: 'POST',
