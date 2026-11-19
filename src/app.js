@@ -31,6 +31,7 @@ import { createVendorPaymentRouter } from './routes/vendorPayment.js';
 import { createAuthenticateUser } from './middleware/auth.js';
 import { createShippingRouter } from './routes/shipping.js';
 import { createInvoiceRouter } from './routes/invoice.js';
+import { createCronRouter } from './routes/cron.js';
 import { ApiError } from './services/shared.js';
 import { env } from './config/env.js';
 
@@ -68,8 +69,9 @@ export function createApp({
   app.use('/api/goods-receipts', createGoodsReceiptsRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, notificationService, authenticate }));
   app.use('/api/shipping', createShippingRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, notificationService, authenticate }));
   app.use('/api/invoices', createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, notificationService, userModel, authenticate }));
+  app.use('/api/cron', createCronRouter({ goodsReceiptModel, shippingRequestModel, deliveryOrderModel, invoiceModel, notificationModel, notificationService, userModel, settings }));
   app.use('/api/vendor-payments', createVendorPaymentRouter({ vendorPoModel, vendorPaymentModel, salesOrderModel, authenticate }));
-  app.use('/api/documents', createDocumentsRouter({ documentModel, notificationService, authenticate }));
+  app.use('/api/documents', createDocumentsRouter({ documentModel, notificationService, authenticate, settings }));
   app.use('/api/notifications', createNotificationsRouter({ notificationModel, activityLogModel, userModel, authenticate }));
 
   app.use((_request, response) => {
