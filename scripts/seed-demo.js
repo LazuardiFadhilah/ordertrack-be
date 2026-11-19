@@ -5,41 +5,43 @@ import Quotation from '../src/models/Quotation.js';
 import SalesOrder from '../src/models/SalesOrder.js';
 
 if (process.env.SEED_DEMO !== 'true') throw new Error('Set SEED_DEMO=true to seed demo records');
+if (process.env.DEMO_SEED_TARGET !== 'production') throw new Error('Set DEMO_SEED_TARGET=production to confirm the target database');
 await connectToDatabase();
 
-const customers = [
-  { name: 'PT Dummy Nusantara', address: 'Jl. Contoh No. 1, Jakarta', contact: 'Dummy Contact 01', npwp: '0123456789012345', npwpName: 'PT Dummy Nusantara', taxAddress: 'Jl. Contoh No. 1, Jakarta' },
-  { name: 'CV Contoh Persada', address: 'Jl. Sampel No. 2, Bandung', contact: 'Dummy Contact 02', npwp: '9876543210987654', npwpName: 'CV Contoh Persada', taxAddress: 'Jl. Sampel No. 2, Bandung' },
-];
-const vendors = [
-  { name: 'PT Vendor Contoh', contact: 'Dummy Vendor Contact 01' },
-  { name: 'CV Pasok Sampel', contact: 'Dummy Vendor Contact 02' },
-];
-const ids = new Map();
-for (const data of customers) {
-  const record = await Customer.findOneAndUpdate({ name: data.name }, { $set: data }, { upsert: true, new: true, setDefaultsOnInsert: true });
-  ids.set(data.name, record.id);
+const pad = (n) => String(n).padStart(3, '0');
+const customers = [];
+for (let i = 1; i <= 20; i += 1) {
+  const name = `Dummy Customer ${pad(i)}`;
+  const address = `Jl. Contoh Dummy No. ${i}, Jakarta`;
+  const data = { name, address, contact: `Kontak Dummy ${pad(i)}`, npwp: String(1000000000000000 + i), npwpName: name, taxAddress: address };
+  customers.push(await Customer.findOneAndUpdate({ name }, { $set: data }, { upsert: true, new: true, setDefaultsOnInsert: true }));
 }
-for (const data of vendors) await Vendor.findOneAndUpdate({ name: data.name }, { $set: data }, { upsert: true, new: true, setDefaultsOnInsert: true });
-
-const examples = [
-  { number: 'QTN-DEMO-0001', customerName: customers[0].name, status: 'SENT', sku: 'DUM-001', name: 'Komponen Contoh A', qty: 10, unitPrice: 150000 },
-  { number: 'QTN-DEMO-0002', customerName: customers[1].name, status: 'DRAFT', sku: 'DUM-002', name: 'Komponen Sampel B', qty: 6, unitPrice: 225000 },
-];
-for (const item of examples) {
-  const lineTotal = item.qty * item.unitPrice;
-  const quotation = await Quotation.findOneAndUpdate({ number: item.number }, { $set: {
-    number: item.number, customerId: ids.get(item.customerName), customerName: item.customerName,
-    items: [{ sku: item.sku, name: item.name, qty: item.qty, unitPrice: item.unitPrice, lineTotal }],
-    totalAmount: lineTotal, status: item.status,
+for (let i = 1; i <= 10; i += 1) {
+  const name = `Dummy Vendor ${pad(i)}`;
+  await Vendor.findOneAndUpdate({ name }, { $set: { name, contact: `Kontak Vendor Dummy ${pad(i)}` } }, { upsert: true, new: true, setDefaultsOnInsert: true });
+}
+for (let i = 1; i <= 40; i += 1) {
+  const customer = customers[(i - 1) % customers.length];
+  const number = `QTN-DEMO-${pad(i)}`;
+  const qty = 2 + (i % 9);
+  const unitPrice = 50000 + (i % 17) * 12500;
+  const lineTotal = qty * unitPrice;
+  const quotation = await Quotation.findOneAndUpdate({ number }, { $set: {
+    number, customerId: customer.id, customerName: customer.name,
+    items: [{ sku: `DUM-${pad(i)}`, name: `Produk Dummy ${pad(i)}`, qty, unitPrice, lineTotal }],
+    totalAmount: lineTotal, status: i % 5 === 0 ? 'DRAFT' : 'SENT',
     createdBy: { id: 'demo-sales', name: 'Dummy SALES User' }, salesOrderId: null,
   } }, { upsert: true, new: true, setDefaultsOnInsert: true });
-  if (item.status === 'SENT') await SalesOrder.findOneAndUpdate({ soNumber: 'SO-DEMO-0001' }, { $set: {
-    soNumber: 'SO-DEMO-0001', customerPoNumber: 'PO-DUMMY-001', customerId: ids.get(item.customerName), customerName: item.customerName,
-    quotationId: quotation.id, quotationNumber: quotation.number, salesId: 'demo-sales', salesName: 'Dummy SALES User',
-    items: [{ sku: item.sku, name: item.name, qtyOrdered: item.qty, qtyReceived: 4, qtyShipped: 0, qtyInvoiced: 0, unitPrice: item.unitPrice }],
-    totalAmount: lineTotal, status: 'PARTIAL_RECEIVED',
-  } }, { upsert: true, new: true, setDefaultsOnInsert: true });
+  if (i <= 30) {
+    const received = i % 3 === 0 ? qty : Math.floor(qty / 2);
+    await SalesOrder.findOneAndUpdate({ soNumber: `SO-DEMO-${pad(i)}` }, { $set: {
+      soNumber: `SO-DEMO-${pad(i)}`, customerPoNumber: `PO-DUMMY-${pad(i)}`,
+      customerId: customer.id, customerName: customer.name,
+      quotationId: quotation.id, quotationNumber: number, salesId: 'demo-sales', salesName: 'Dummy SALES User',
+      items: [{ sku: `DUM-${pad(i)}`, name: `Produk Dummy ${pad(i)}`, qtyOrdered: qty, qtyReceived: received, qtyShipped: i % 4 === 0 ? received : 0, qtyInvoiced: 0, unitPrice }],
+      totalAmount: lineTotal, status: ['PO_RECEIVED', 'PROCURING', 'PARTIAL_RECEIVED', 'GOODS_RECEIVED', 'SHIPPING_REQUESTED', 'SHIPPED'][i % 6],
+    } }, { upsert: true, new: true, setDefaultsOnInsert: true });
+  }
 }
-process.stdout.write('Upserted 2 dummy customers, 2 dummy vendors, 2 dummy quotations, and 1 dummy sales order.\n');
+process.stdout.write('Upserted 20 customers, 10 vendors, 40 quotations, and 30 sales orders (100 records total).\n');
 await Promise.all([Customer.db.close(), Vendor.db.close(), Quotation.db.close(), SalesOrder.db.close()]);
