@@ -15,7 +15,7 @@ Environment templates contain variable names only. Put values in a local untrack
 | `AUTH_COOKIE_SECURE` | Server runtime configuration | Secure cookie behavior |
 | `CORS_ORIGIN` | Server runtime configuration | Allowed direct API origin |
 | `PORT` | Local runtime only | Local HTTP port |
-| `STORAGE_PROVIDER` | Required for upload signing | Provider name (`s3-compatible` adapter required) |
+| `BLOB_READ_WRITE_TOKEN` | Required secret | Vercel Blob token used to issue client upload tokens |
 | `STORAGE_BUCKET` | Required for upload signing | Storage bucket/container |
 | `STORAGE_REGION` | Required for upload signing | Storage region |
 | `STORAGE_ENDPOINT` | Required for upload signing | Storage API endpoint |
@@ -36,10 +36,11 @@ Storage upload contract:
 
 - `POST /api/documents/upload-intents` accepts `soId`, `refType`, `fileName`, `mimeType`, and `size`.
 - Allowed types are PDF/JPG/PNG; maximum size is 10 MB.
-- The endpoint fails closed with HTTP 503 and names the missing storage variables until a real provider signing adapter is configured.
+- The endpoint issues a Vercel Blob client upload token restricted to the requested MIME type and 10 MB maximum.
+- The endpoint fails closed with HTTP 503 and names `BLOB_READ_WRITE_TOKEN` when the token is missing.
 - Metadata remains SO-scoped. `GET /api/documents/:documentId` and `GET /api/documents/so/:soId` require authenticated document-reader roles.
 
-The provider signing adapter is intentionally blocked until storage credentials/configuration are supplied; the API does not pretend that local metadata is file storage.
+The API returns a Vercel Blob client token; the client uploads directly to Blob, then submits the resulting URL through the document metadata endpoint.
 
 Cron is not configured in the foundation phase.
 

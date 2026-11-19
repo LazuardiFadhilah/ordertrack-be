@@ -9,6 +9,7 @@ export const env = {
   authCookieSecure: process.env.AUTH_COOKIE_SECURE === 'true',
   cronSecret: process.env.CRON_SECRET ?? '',
   storage: {
+    blobReadWriteToken: process.env.BLOB_READ_WRITE_TOKEN,
     provider: process.env.STORAGE_PROVIDER,
     bucket: process.env.STORAGE_BUCKET,
     region: process.env.STORAGE_REGION,
