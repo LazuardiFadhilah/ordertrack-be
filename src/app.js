@@ -20,6 +20,9 @@ import { DeliveryOrder } from './models/DeliveryOrder.js';
 import { Invoice, Payment } from './models/invoice.js';
 import { VendorPayment } from './models/vendorPayment.js';
 import { Document } from './models/Document.js';
+import { Notification } from './models/Notification.js';
+import { ActivityLog } from './models/ActivityLog.js';
+import { createNotificationsRouter } from './routes/notifications.js';
 import { createDocumentsRouter } from './routes/documents.js';
 
 // Storage credentials remain local; the API currently records metadata only.
@@ -44,6 +47,8 @@ export function createApp({
   paymentModel = Payment,
   vendorPaymentModel = VendorPayment,
   documentModel = Document,
+  notificationModel = Notification,
+  activityLogModel = ActivityLog,
   settings = env,
 } = {}) {
   const app = express();
@@ -63,6 +68,7 @@ export function createApp({
   app.use('/api/invoices', createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, authenticate }));
   app.use('/api/vendor-payments', createVendorPaymentRouter({ vendorPoModel, vendorPaymentModel, salesOrderModel, authenticate }));
   app.use('/api/documents', createDocumentsRouter({ documentModel, authenticate }));
+  app.use('/api/notifications', createNotificationsRouter({ notificationModel, activityLogModel, authenticate }));
 
   app.use((_request, response) => {
     response.status(404).json({
