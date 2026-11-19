@@ -5,7 +5,13 @@ const invoiceReaders = ['ADMIN', 'AR', 'SALES'];
 const invoiceWriters = ['ADMIN', 'AR'];
 const invoiceableStatuses = ['SHIPPED', 'DO_RETURNED', 'COMPLETED'];
 
-export function createInvoiceService({ invoiceModel, paymentModel, salesOrderModel }) {
+export function createInvoiceService({ invoiceModel, paymentModel, salesOrderModel, notificationService, userModel }) {
+  const notify = notificationService?.notify ?? (() => Promise.resolve());
+  const resolveSalesId = async (so) => {
+    if (so.salesId) return String(so.salesId);
+    if (!userModel?.findOne) return null;
+    return (await userModel.findOne({ role: 'SALES' }).select('_id').lean())?._id;
+  };
   return {
     async listInvoices(user, query = {}) {
       if (!invoiceReaders.includes(user.role)) throw forbidden();
@@ -53,6 +59,7 @@ export function createInvoiceService({ invoiceModel, paymentModel, salesOrderMod
         await invoiceModel.deleteOne?.({ _id: invoice._id });
         throw new ApiError(409, 'Sales Order status changed; retry invoice creation');
       }
+      await notify({ userIds: [await resolveSalesId(so)].filter(Boolean), soId: so._id, type: 'INVOICE_CREATED', title: 'Invoice dibuat', message: `Invoice ${invoice.invoiceNumber} dibuat`, entityType: 'Invoice', entityId: invoice._id, actor: user });
       return { invoice };
     },
 
@@ -82,7 +89,11 @@ export function createInvoiceService({ invoiceModel, paymentModel, salesOrderMod
         ? await invoiceModel.findOneAndUpdate({ _id: updated._id, paidAmount: updated.paidAmount }, { $set: { status: 'PAID' } }, { new: true }).lean()
         : await invoiceModel.findOneAndUpdate({ _id: updated._id, paidAmount: updated.paidAmount }, { $set: { status: 'PARTIALLY_PAID' } }, { new: true }).lean();
       if (!settled) throw new ApiError(409, 'Invoice changed while recording payment; reconcile payment before retrying');
-      if (fullyPaid) await salesOrderModel.updateOne({ _id: settled.soId }, { $set: { status: 'PAID' } });
+      if (fullyPaid) {
+        await salesOrderModel.updateOne({ _id: settled.soId }, { $set: { status: 'PAID' } });
+        const salesId = await resolveSalesId({ _id: settled.soId, salesId: (await salesOrderModel.findById(settled.soId).lean())?.salesId });
+        await notify({ roles: ['AP'], userIds: [salesId].filter(Boolean), soId: settled.soId, type: 'CUSTOMER_PAYMENT_PAID', title: 'Pembayaran lunas', message: `Invoice ${settled.invoiceNumber} telah lunas`, entityType: 'Invoice', entityId: settled._id, actor: user });
+      }
       return { payment, invoice: settled, outstandingAmount: Math.max(0, settled.totalAmount - settled.paidAmount) };
     },
   };

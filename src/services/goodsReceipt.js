@@ -46,7 +46,8 @@ export function serializeGoodsReceipt(document) {
   };
 }
 
-export function createGoodsReceiptService({ salesOrderModel, vendorPoModel, goodsReceiptModel }) {
+export function createGoodsReceiptService({ salesOrderModel, vendorPoModel, goodsReceiptModel, notificationService }) {
+  const notify = notificationService?.notify ?? (() => Promise.resolve());
   async function loadSo(soId, user) {
     assertId(soId, 'Sales order');
     const so = await salesOrderModel.findById(soId).lean();
@@ -137,6 +138,7 @@ export function createGoodsReceiptService({ salesOrderModel, vendorPoModel, good
       await updateVendorPoStatus(vendorPoModel, goodsReceiptModel, vendorPo._id);
 
       await recomputeSoStatus(salesOrderModel, vendorPoModel, goodsReceiptModel, so._id);
+      await notify({ userIds: [so.salesId], soId: so._id, type: 'GOODS_RECEIPT_CREATED', title: 'Barang diterima', message: `Goods receipt ${goodsReceipt.grNumber} diinput`, entityType: 'GoodsReceipt', entityId: goodsReceipt._id, actor: user });
 
       return serializeGoodsReceipt(goodsReceipt);
     },

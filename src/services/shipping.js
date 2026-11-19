@@ -135,7 +135,8 @@ export async function recomputeSoStatusAdvanced(salesOrderModel, vendorPoModel, 
   }
 }
 
-export function createShippingService({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel }) {
+export function createShippingService({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, notificationService }) {
+  const notify = notificationService?.notify ?? (() => Promise.resolve());
   async function loadSo(soId, user) {
     assertId(soId, 'Sales order');
     const so = await salesOrderModel.findById(soId).lean();
@@ -210,6 +211,7 @@ export function createShippingService({ salesOrderModel, vendorPoModel, goodsRec
       }));
 
       await recomputeSoStatusAdvanced(salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, so._id);
+      await notify({ roles: ['GA'], soId: so._id, type: 'SHIPPING_REQUEST_CREATED', title: 'Permintaan pengiriman baru', message: `Shipping request ${sr.srNumber} dibuat`, entityType: 'ShippingRequest', entityId: sr._id, actor: user });
 
       return serializeShippingRequest(sr);
     },
@@ -307,6 +309,7 @@ export function createShippingService({ salesOrderModel, vendorPoModel, goodsRec
       ).lean();
 
       await recomputeSoStatusAdvanced(salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, doDoc.soId);
+      await notify({ roles: ['AR'], soId: doDoc.soId, type: 'DO_SIGNED_RETURNED', title: 'DO ditandatangani', message: `DO ${updated.doNumber} telah diunggah`, entityType: 'DeliveryOrder', entityId: updated._id, actor: user });
 
       return serializeDeliveryOrder(updated);
     },

@@ -46,7 +46,8 @@ export function serializeVendorPo(document) {
   };
 }
 
-export function createVendorPoService({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel }) {
+export function createVendorPoService({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, notificationService }) {
+  const notify = notificationService?.notify ?? (() => Promise.resolve());
   async function loadSo(soId, user) {
     assertId(soId, 'Sales order');
     const so = await salesOrderModel.findById(soId).lean();
@@ -121,6 +122,7 @@ export function createVendorPoService({ salesOrderModel, vendorPoModel, vendorMo
       }));
 
       await recomputeSoStatus(salesOrderModel, vendorPoModel, goodsReceiptModel, so._id);
+      await notify({ roles: ['GA'], soId: so._id, type: 'VENDOR_PO_CREATED', title: 'Vendor PO dibuat', message: `Vendor PO ${vendorPo.poNumber} dibuat`, entityType: 'VendorPO', entityId: vendorPo._id, actor: user });
 
       return serializeVendorPo(vendorPo);
     },

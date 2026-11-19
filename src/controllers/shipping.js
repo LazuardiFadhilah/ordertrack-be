@@ -1,7 +1,7 @@
 import { createShippingService } from '../services/shipping.js';
 
-export function createShippingController({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel }) {
-  const service = createShippingService({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel });
+export function createShippingController({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, notificationService }) {
+  const service = createShippingService({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, notificationService });
 
   return {
     async listRequests(request, response) {

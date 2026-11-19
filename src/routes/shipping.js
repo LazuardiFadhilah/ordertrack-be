@@ -13,10 +13,11 @@ export function createShippingRouter({
   goodsReceiptModel = GoodsReceipt,
   shippingRequestModel = ShippingRequest,
   deliveryOrderModel = DeliveryOrder,
+  notificationService,
   authenticate = authenticateUser,
 } = {}) {
   const router = Router();
-  const controller = createShippingController({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel });
+  const controller = createShippingController({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, notificationService });
 
   // Shipping Requests
   router.get('/shipping-requests', authenticate, controller.listRequests);

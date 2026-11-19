@@ -3,9 +3,9 @@ import Document from '../models/Document.js';
 import { authenticateUser, requireRole } from '../middleware/auth.js';
 import { createDocumentService } from '../services/documents.js';
 
-export function createDocumentsRouter({ documentModel = Document, authenticate = authenticateUser } = {}) {
+export function createDocumentsRouter({ documentModel = Document, notificationService, authenticate = authenticateUser } = {}) {
   const router = Router();
-  const service = createDocumentService({ documentModel });
+  const service = createDocumentService({ documentModel, notificationService });
   router.use(authenticate);
   router.get('/so/:soId', async (req, res, next) => {
     try { res.json({ success: true, data: await service.listBySo(req.params.soId, req.user) }); } catch (error) { next(error); }

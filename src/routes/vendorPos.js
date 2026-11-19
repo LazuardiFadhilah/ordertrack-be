@@ -11,10 +11,11 @@ export function createVendorPosRouter({
   vendorPoModel = VendorPO,
   vendorModel = Vendor,
   goodsReceiptModel = GoodsReceipt,
+  notificationService,
   authenticate = authenticateUser,
 } = {}) {
   const router = Router();
-  const controller = createVendorPosController({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel });
+  const controller = createVendorPosController({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, notificationService });
 
   router.use(authenticate);
   router.get('/', controller.list);

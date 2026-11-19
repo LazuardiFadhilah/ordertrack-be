@@ -23,6 +23,7 @@ import { Document } from './models/Document.js';
 import { Notification } from './models/Notification.js';
 import { ActivityLog } from './models/ActivityLog.js';
 import { createNotificationsRouter } from './routes/notifications.js';
+import { createNotificationService } from './services/notifications.js';
 import { createDocumentsRouter } from './routes/documents.js';
 
 // Storage credentials remain local; the API currently records metadata only.
@@ -53,6 +54,7 @@ export function createApp({
 } = {}) {
   const app = express();
   const authenticate = createAuthenticateUser(userModel, settings);
+  const notificationService = createNotificationService({ notificationModel, activityLogModel, userModel });
 
   app.use(express.json());
   app.use('/api', healthRouter);
@@ -62,13 +64,13 @@ export function createApp({
   app.use('/api/vendors', createVendorsRouter({ vendorModel, authenticate }));
   app.use('/api/quotations', createQuotationsRouter({ quotationModel, customerModel, salesOrderModel, authenticate }));
   app.use('/api/sales-orders', createSalesOrdersRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, authenticate }));
-  app.use('/api/vendor-pos', createVendorPosRouter({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, authenticate }));
-  app.use('/api/goods-receipts', createGoodsReceiptsRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, authenticate }));
-  app.use('/api/shipping', createShippingRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, authenticate }));
-  app.use('/api/invoices', createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, authenticate }));
+  app.use('/api/vendor-pos', createVendorPosRouter({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, notificationService, authenticate }));
+  app.use('/api/goods-receipts', createGoodsReceiptsRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, notificationService, authenticate }));
+  app.use('/api/shipping', createShippingRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, notificationService, authenticate }));
+  app.use('/api/invoices', createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, notificationService, userModel, authenticate }));
   app.use('/api/vendor-payments', createVendorPaymentRouter({ vendorPoModel, vendorPaymentModel, salesOrderModel, authenticate }));
-  app.use('/api/documents', createDocumentsRouter({ documentModel, authenticate }));
-  app.use('/api/notifications', createNotificationsRouter({ notificationModel, activityLogModel, authenticate }));
+  app.use('/api/documents', createDocumentsRouter({ documentModel, notificationService, authenticate }));
+  app.use('/api/notifications', createNotificationsRouter({ notificationModel, activityLogModel, userModel, authenticate }));
 
   app.use((_request, response) => {
     response.status(404).json({

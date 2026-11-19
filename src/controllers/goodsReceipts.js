@@ -1,7 +1,7 @@
 import { createGoodsReceiptService } from '../services/goodsReceipt.js';
 
-export function createGoodsReceiptsController({ salesOrderModel, vendorPoModel, goodsReceiptModel }) {
-  const service = createGoodsReceiptService({ salesOrderModel, vendorPoModel, goodsReceiptModel });
+export function createGoodsReceiptsController({ salesOrderModel, vendorPoModel, goodsReceiptModel, notificationService }) {
+  const service = createGoodsReceiptService({ salesOrderModel, vendorPoModel, goodsReceiptModel, notificationService });
 
   return {
     async list(request, response) {

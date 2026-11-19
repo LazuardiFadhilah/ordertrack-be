@@ -1,7 +1,7 @@
 import { createVendorPoService } from '../services/vendorPo.js';
 
-export function createVendorPosController({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel }) {
-  const service = createVendorPoService({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel });
+export function createVendorPosController({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, notificationService }) {
+  const service = createVendorPoService({ salesOrderModel, vendorPoModel, vendorModel, goodsReceiptModel, notificationService });
 
   return {
     async list(request, response) {

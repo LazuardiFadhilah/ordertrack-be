@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { createInvoiceService } from '../services/invoice.js';
 
-export function createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, authenticate }) {
+export function createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, notificationService, userModel, authenticate }) {
   const router = Router();
-  const service = createInvoiceService({ invoiceModel, paymentModel, salesOrderModel });
+  const service = createInvoiceService({ invoiceModel, paymentModel, salesOrderModel, notificationService, userModel });
   router.use(authenticate);
 
   router.get('/', async (req, res, next) => {

@@ -9,10 +9,11 @@ export function createGoodsReceiptsRouter({
   salesOrderModel = SalesOrder,
   vendorPoModel = VendorPO,
   goodsReceiptModel = GoodsReceipt,
+  notificationService,
   authenticate = authenticateUser,
 } = {}) {
   const router = Router();
-  const controller = createGoodsReceiptsController({ salesOrderModel, vendorPoModel, goodsReceiptModel });
+  const controller = createGoodsReceiptsController({ salesOrderModel, vendorPoModel, goodsReceiptModel, notificationService });
 
   router.use(authenticate);
   router.get('/', controller.list);
