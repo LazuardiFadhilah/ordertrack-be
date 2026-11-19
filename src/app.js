@@ -19,6 +19,10 @@ import { ShippingRequest } from './models/ShippingRequest.js';
 import { DeliveryOrder } from './models/DeliveryOrder.js';
 import { Invoice, Payment } from './models/invoice.js';
 import { VendorPayment } from './models/vendorPayment.js';
+import { Document } from './models/Document.js';
+import { createDocumentsRouter } from './routes/documents.js';
+
+// Storage credentials remain local; the API currently records metadata only.
 import { createVendorPaymentRouter } from './routes/vendorPayment.js';
 import { createAuthenticateUser } from './middleware/auth.js';
 import { createShippingRouter } from './routes/shipping.js';
@@ -39,6 +43,7 @@ export function createApp({
   invoiceModel = Invoice,
   paymentModel = Payment,
   vendorPaymentModel = VendorPayment,
+  documentModel = Document,
   settings = env,
 } = {}) {
   const app = express();
@@ -57,6 +62,7 @@ export function createApp({
   app.use('/api/shipping', createShippingRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, authenticate }));
   app.use('/api/invoices', createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, authenticate }));
   app.use('/api/vendor-payments', createVendorPaymentRouter({ vendorPoModel, vendorPaymentModel, salesOrderModel, authenticate }));
+  app.use('/api/documents', createDocumentsRouter({ documentModel, authenticate }));
 
   app.use((_request, response) => {
     response.status(404).json({
