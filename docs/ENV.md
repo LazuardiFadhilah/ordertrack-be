@@ -15,12 +15,12 @@ Environment templates contain variable names only. Put values in a local untrack
 | `AUTH_COOKIE_SECURE` | Server runtime configuration | Secure cookie behavior |
 | `CORS_ORIGIN` | Server runtime configuration | Allowed direct API origin |
 | `PORT` | Local runtime only | Local HTTP port |
-| `STORAGE_PROVIDER` | Future | Storage provider selector |
-| `STORAGE_BUCKET` | Future | Storage bucket/container |
-| `STORAGE_REGION` | Future | Storage region |
-| `STORAGE_ENDPOINT` | Future | Storage API endpoint |
-| `STORAGE_ACCESS_KEY_ID` | Future secret | Storage access identifier |
-| `STORAGE_SECRET_ACCESS_KEY` | Future secret | Storage access secret |
+| `STORAGE_PROVIDER` | Required for upload signing | Provider name (`s3-compatible` adapter required) |
+| `STORAGE_BUCKET` | Required for upload signing | Storage bucket/container |
+| `STORAGE_REGION` | Required for upload signing | Storage region |
+| `STORAGE_ENDPOINT` | Required for upload signing | Storage API endpoint |
+| `STORAGE_ACCESS_KEY_ID` | Required secret | Storage access identifier |
+| `STORAGE_SECRET_ACCESS_KEY` | Required secret | Storage access secret |
 | `CRON_SECRET` | Future secret | Vercel Cron protection |
 
 Authentication configuration:
@@ -32,7 +32,16 @@ Authentication configuration:
 
 For local development, copy `.env.example` to `.env` and configure the blank names for the local server. For Vercel production, configure the same variable names in Server Project → Settings → Environment Variables, use a non-placeholder `JWT_SECRET`, and enable `AUTH_COOKIE_SECURE`.
 
-Storage and Cron are not configured in the foundation phase.
+Storage upload contract:
+
+- `POST /api/documents/upload-intents` accepts `soId`, `refType`, `fileName`, `mimeType`, and `size`.
+- Allowed types are PDF/JPG/PNG; maximum size is 10 MB.
+- The endpoint fails closed with HTTP 503 and names the missing storage variables until a real provider signing adapter is configured.
+- Metadata remains SO-scoped. `GET /api/documents/:documentId` and `GET /api/documents/so/:soId` require authenticated document-reader roles.
+
+The provider signing adapter is intentionally blocked until storage credentials/configuration are supplied; the API does not pretend that local metadata is file storage.
+
+Cron is not configured in the foundation phase.
 
 ## Configuration and secret scan
 
