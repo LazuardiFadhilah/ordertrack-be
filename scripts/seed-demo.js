@@ -3,10 +3,13 @@ import Customer from '../src/models/Customer.js';
 import Vendor from '../src/models/Vendor.js';
 import Quotation from '../src/models/Quotation.js';
 import SalesOrder from '../src/models/SalesOrder.js';
+import User from '../src/models/User.js';
 
 if (process.env.SEED_DEMO !== 'true') throw new Error('Set SEED_DEMO=true to seed demo records');
 if (process.env.DEMO_SEED_TARGET !== 'production') throw new Error('Set DEMO_SEED_TARGET=production to confirm the target database');
 await connectToDatabase();
+const demoSales = await User.findOne({ email: 'sales@example.test' }).select('_id name').lean();
+if (!demoSales) throw new Error('Seed users first: sales@example.test is missing');
 
 const pad = (n) => String(n).padStart(3, '0');
 const customers = [];
@@ -30,14 +33,14 @@ for (let i = 1; i <= 40; i += 1) {
     number, customerId: customer.id, customerName: customer.name,
     items: [{ sku: `DUM-${pad(i)}`, name: `Produk Dummy ${pad(i)}`, qty, unitPrice, lineTotal }],
     totalAmount: lineTotal, status: i % 5 === 0 ? 'DRAFT' : 'SENT',
-    createdBy: { id: 'demo-sales', name: 'Dummy SALES User' }, salesOrderId: null,
+    createdBy: { id: String(demoSales._id), name: demoSales.name }, salesOrderId: null,
   } }, { upsert: true, new: true, setDefaultsOnInsert: true });
   if (i <= 30) {
     const received = i % 3 === 0 ? qty : Math.floor(qty / 2);
     await SalesOrder.findOneAndUpdate({ soNumber: `SO-DEMO-${pad(i)}` }, { $set: {
       soNumber: `SO-DEMO-${pad(i)}`, customerPoNumber: `PO-DUMMY-${pad(i)}`,
       customerId: customer.id, customerName: customer.name,
-      quotationId: quotation.id, quotationNumber: number, salesId: 'demo-sales', salesName: 'Dummy SALES User',
+      quotationId: quotation.id, quotationNumber: number, salesId: String(demoSales._id), salesName: demoSales.name,
       items: [{ sku: `DUM-${pad(i)}`, name: `Produk Dummy ${pad(i)}`, qtyOrdered: qty, qtyReceived: received, qtyShipped: i % 4 === 0 ? received : 0, qtyInvoiced: 0, unitPrice }],
       totalAmount: lineTotal, status: ['PO_RECEIVED', 'PROCURING', 'PARTIAL_RECEIVED', 'GOODS_RECEIVED', 'SHIPPING_REQUESTED', 'SHIPPED'][i % 6],
     } }, { upsert: true, new: true, setDefaultsOnInsert: true });
