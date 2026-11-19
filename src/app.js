@@ -8,16 +8,18 @@ import { createSalesOrdersRouter } from './routes/salesOrders.js';
 import { createVendorPosRouter } from './routes/vendorPos.js';
 import { createGoodsReceiptsRouter } from './routes/goodsReceipts.js';
 import docsRouter from './routes/docs.js';
-import User from './models/User.js';
-import Customer from './models/Customer.js';
-import Vendor from './models/Vendor.js';
-import Quotation from './models/Quotation.js';
-import SalesOrder from './models/SalesOrder.js';
-import VendorPO from './models/VendorPO.js';
-import GoodsReceipt from './models/GoodsReceipt.js';
-import ShippingRequest from './models/ShippingRequest.js';
-import DeliveryOrder from './models/DeliveryOrder.js';
-import { Invoice, Payment } from './models/Invoice.js';
+import { User } from './models/User.js';
+import { Customer } from './models/Customer.js';
+import { Vendor } from './models/Vendor.js';
+import { Quotation } from './models/Quotation.js';
+import { SalesOrder } from './models/SalesOrder.js';
+import { VendorPO } from './models/VendorPO.js';
+import { GoodsReceipt } from './models/GoodsReceipt.js';
+import { ShippingRequest } from './models/ShippingRequest.js';
+import { DeliveryOrder } from './models/DeliveryOrder.js';
+import { Invoice, Payment } from './models/invoice.js';
+import { VendorPayment } from './models/vendorPayment.js';
+import { createVendorPaymentRouter } from './routes/vendorPayment.js';
 import { createAuthenticateUser } from './middleware/auth.js';
 import { createShippingRouter } from './routes/shipping.js';
 import { createInvoiceRouter } from './routes/invoice.js';
@@ -36,6 +38,7 @@ export function createApp({
   deliveryOrderModel = DeliveryOrder,
   invoiceModel = Invoice,
   paymentModel = Payment,
+  vendorPaymentModel = VendorPayment,
   settings = env,
 } = {}) {
   const app = express();
@@ -53,6 +56,7 @@ export function createApp({
   app.use('/api/goods-receipts', createGoodsReceiptsRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, authenticate }));
   app.use('/api/shipping', createShippingRouter({ salesOrderModel, vendorPoModel, goodsReceiptModel, shippingRequestModel, deliveryOrderModel, authenticate }));
   app.use('/api/invoices', createInvoiceRouter({ invoiceModel, paymentModel, salesOrderModel, authenticate }));
+  app.use('/api/vendor-payments', createVendorPaymentRouter({ vendorPoModel, vendorPaymentModel, salesOrderModel, authenticate }));
 
   app.use((_request, response) => {
     response.status(404).json({
