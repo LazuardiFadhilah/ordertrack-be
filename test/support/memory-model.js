@@ -7,6 +7,19 @@ function getPath(document, path) {
 function matches(document, filter = {}) {
   return Object.entries(filter).every(([key, expected]) => {
     if (key === '$or') return expected.some((entry) => matches(document, entry));
+    if (key === '$and') return expected.every((entry) => matches(document, entry));
+    if (key === '$expr') {
+      const evaluate = (expression) => {
+        if (Array.isArray(expression)) return expression.map(evaluate);
+        if (typeof expression === 'string' && expression.startsWith('$')) return getPath(document, expression.slice(1));
+        if (expression && typeof expression === 'object') {
+          if ('$add' in expression) return evaluate(expression.$add).reduce((sum, value) => sum + value, 0);
+          if ('$gte' in expression) { const [left, right] = evaluate(expression.$gte); return left >= right; }
+        }
+        return expression;
+      };
+      return evaluate(expected);
+    }
 
     const value = getPath(document, key);
     if (expected instanceof RegExp) return expected.test(String(value ?? ''));
@@ -15,6 +28,7 @@ function matches(document, filter = {}) {
       if ('$in' in expected) return expected.$in.map(String).includes(String(value));
       if ('$ne' in expected) return String(value) !== String(expected.$ne);
       if ('$exists' in expected) return (value !== undefined) === expected.$exists;
+      if ('$gte' in expected) return value >= expected.$gte;
       return false;
     }
 
@@ -91,6 +105,20 @@ export function createMemoryModel() {
         const document = documents.find((candidate) => String(candidate._id) === String(id));
         return document ? structuredClone(document) : null;
       });
+    },
+    async updateOne(filter = {}, update = {}) {
+      const document = documents.find((candidate) => matches(candidate, filter));
+      if (!document) return { matchedCount: 0, modifiedCount: 0 };
+      if (update.$set) Object.assign(document, structuredClone(update.$set));
+      else Object.assign(document, structuredClone(update));
+      document.updatedAt = new Date();
+      return { matchedCount: 1, modifiedCount: 1 };
+    },
+    async deleteOne(filter = {}) {
+      const index = documents.findIndex((candidate) => matches(candidate, filter));
+      if (index < 0) return { deletedCount: 0 };
+      documents.splice(index, 1);
+      return { deletedCount: 1 };
     },
     countDocuments(filter = {}) {
       return Promise.resolve(documents.filter((document) => matches(document, filter)).length);
